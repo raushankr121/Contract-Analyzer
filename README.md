@@ -183,7 +183,7 @@ aggroso/
 | **Data Persistence** | Automatic dual persistence: writes to server disk (`data/contracts.json`, `data/policy.json`, `data/logs.json`) and browser `localStorage`. Survives page refreshes and server reboots. |
 | **Functional AI Agent** | Live integration with Google Gemini 2.5 Flash for contract clause extraction and interactive clause risk advisory, paired with deterministic arithmetic. |
 | **Human Review & Approval** | Explicit review workflow (`PENDING`, `APPROVED`, `REJECTED`, `EDITED`, `STALE`), user edit modal, audit logging, and bulk approval actions. |
-| **Version Invalidation (Staleness)** | Compares v1 against v2 amendments; automatically invalidates previously approved items into `STALE` when underlying contract terms change. |
+| **Version Invalidation (Staleness)** | Compares contract versions when new versions or amendments are uploaded via "Upload New Version"; automatically invalidates previously approved items into `STALE` when underlying contract terms change. |
 | **Multi-Tier Reminder Engine** | Computes operational reminder countdowns (Critical, Warning, Info) across standard notice thresholds (90d, 60d, 30d, 7d before decision cutoffs). |
 | **Verbatim Citations** | 100% of extracted items retain exact section headers and verbatim quotations for direct human verifiability. |
 | **Structured Application Logs** | Chronological event logger with dedicated UI drawer (`LogsDrawer.tsx`), level filtering (`AI_AGENT`, `AUDIT`, `ERROR`, `WARN`, `INFO`), and JSON export. |

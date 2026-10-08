@@ -610,10 +610,6 @@ export const App: React.FC = () => {
     handleProcessPolicy(SAMPLE_POLICY_TEXT, 'Apex_Procurement_Policy_v3.2.txt');
   };
 
-  const handleLoadSampleV2 = () => {
-    handleProcessContract(SAMPLE_CONTRACT_V2_TEXT, 'NexusCloud_Master_Agreement_Amendment_v2.0.txt', true);
-  };
-
   const staleItemsCount = currentVersion
     ? (currentVersion.obligations || []).filter((o) => o.status === 'STALE').length +
       (currentVersion.renewal?.status === 'STALE' ? 1 : 0)
@@ -639,7 +635,6 @@ export const App: React.FC = () => {
         onOpenUploadPolicy={() => setUploadModalState({ isOpen: true, mode: 'POLICY' })}
         onLoadSampleV1={handleLoadSampleV1}
         onLoadSamplePolicy={handleLoadSamplePolicy}
-        onLoadSampleV2={handleLoadSampleV2}
         onExportSummary={() => setActiveTab('SUMMARY')}
         onOpenLogs={() => setIsLogsOpen(true)}
         onResetAll={handleResetAll}

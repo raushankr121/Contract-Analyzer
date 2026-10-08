@@ -21,7 +21,6 @@ interface HeaderProps {
   onOpenUploadPolicy: () => void;
   onLoadSampleV1: () => void;
   onLoadSamplePolicy: () => void;
-  onLoadSampleV2: () => void;
   onExportSummary: () => void;
   onOpenLogs?: () => void;
   onResetAll?: () => void;
@@ -36,7 +35,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUploadPolicy,
   onLoadSampleV1,
   onLoadSamplePolicy,
-  onLoadSampleV2,
   onExportSummary,
   onOpenLogs,
   onResetAll,
@@ -111,17 +109,6 @@ export const Header: React.FC<HeaderProps> = ({
             <BookOpen size={13} style={{ color: '#38bdf8' }} />
             {policy ? 'Policy Active ✓' : 'Load Demo Policy'}
           </button>
-
-          {hasContract && (
-            <button 
-              className="btn btn-secondary btn-sm" 
-              onClick={onLoadSampleV2}
-              title="Load contract amendment v2 to demonstrate staleness & diffs"
-            >
-              <PlusCircle size={13} style={{ color: '#ec4899' }} />
-              Load Amendment v2
-            </button>
-          )}
         </div>
 
         {/* Upload Buttons */}

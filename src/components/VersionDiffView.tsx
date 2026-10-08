@@ -28,7 +28,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
           Single Contract Version Loaded ({currentVersion.versionLabel})
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', maxWidth: '520px', margin: '0.5rem auto 1.5rem auto' }}>
-          To view contract version diffs and observe previously approved items automatically marked as <strong>Potentially Stale</strong>, upload a new version or click <strong>Load Amendment v2</strong> in the top header.
+          To view contract version diffs and observe previously approved items automatically marked as <strong>Potentially Stale</strong>, upload a new version or amendment using <strong>Upload New Version</strong> in the top header.
         </p>
       </div>
     );
