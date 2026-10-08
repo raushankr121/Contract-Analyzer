@@ -18,7 +18,9 @@ import {
 } from 'lucide-react';
 import type { 
   ContractVersion, 
-  ReviewStatus 
+  ReviewStatus,
+  TerminationClause,
+  NoticeClause
 } from '../types/contract';
 import { formatFriendlyDate } from '../utils/deterministicDate';
 
@@ -49,9 +51,9 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
   onOpenSetDates,
   onOpenAiConsult,
 }) => {
-  const effectiveDate = version?.dates?.effectiveDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
-  const initialTerm = version?.dates?.initialTerm || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
-  const expiryDate = version?.dates?.expiryDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
+  const effectiveDate = version?.dates?.effectiveDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '', staleReason: undefined };
+  const initialTerm = version?.dates?.initialTerm || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '', staleReason: undefined };
+  const expiryDate = version?.dates?.expiryDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '', staleReason: undefined };
   const renewal = version?.renewal || {
     type: 'NO_RENEWAL' as const,
     renewalPeriodText: 'Fixed Term',
@@ -62,27 +64,38 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
     exactQuote: '',
     status: 'PENDING' as ReviewStatus,
     certainty: 'CONFIRMED' as const,
+    staleReason: undefined,
+    clarificationQuestion: undefined,
+    priceCapOrAdjustment: undefined,
   };
   const parties = version?.parties || [];
   const obligations = version?.obligations || [];
-  const termination = version?.termination || {
+  const termination: TerminationClause = version?.termination || {
+    id: 'fallback',
     hasConvenienceTermination: false,
     convenienceNoticeDays: 0,
+    convenienceConditions: undefined,
     hasCauseTermination: false,
     causeCurePeriodDays: 0,
     citation: 'N/A',
     exactQuote: '',
     status: 'PENDING' as ReviewStatus,
     certainty: 'CONFIRMED' as const,
+    staleReason: undefined,
   };
-  const notice = version?.notice || {
+  const notice: NoticeClause = version?.notice || ({
+    id: 'fallback',
     permittedMethods: ['Email'],
+    restrictedMethods: [],
+    designatedRecipient: '',
+    designatedAddress: '',
     deemedReceivedDays: 1,
     citation: 'N/A',
     exactQuote: '',
     status: 'PENDING' as ReviewStatus,
     certainty: 'CONFIRMED' as const,
-  };
+    staleReason: undefined,
+  } as NoticeClause);
 
   const renderStatusBadge = (status: ReviewStatus, staleReason?: string) => {
     switch (status) {
