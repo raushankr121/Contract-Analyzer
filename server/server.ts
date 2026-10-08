@@ -23,7 +23,13 @@ import { analyzeContractWithGemini, consultAiAgentOnClause } from './geminiServi
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Allow Vercel frontend (set FRONTEND_URL=https://your-app.vercel.app on Railway)
+// Falls back to allowing all origins if not set (safe for initial deploy)
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173']
+  : true; // allow all
+
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 
 // Health Check

@@ -72,7 +72,7 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
                 localStorage.removeItem('aggroso_contracts_v1');
                 localStorage.removeItem('aggroso_policy_v1');
                 try {
-                  await fetch('/api/contracts', {
+                  await fetch(`${(import.meta.env.VITE_API_URL as string) || ''}/api/contracts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify([]),

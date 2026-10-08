@@ -75,7 +75,7 @@ export const LogsDrawer: React.FC<LogsDrawerProps> = ({ isOpen, onClose }) => {
 
   const handleClearLogs = async () => {
     try {
-      await fetch('/api/logs', { method: 'DELETE' });
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/logs`, { method: 'DELETE' });
       localStorage.removeItem('aggroso_logs_v1');
       setLogs([]);
     } catch {

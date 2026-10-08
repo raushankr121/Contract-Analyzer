@@ -1,6 +1,10 @@
 import type { ContractVersion, OrganizationalPolicy } from '../types/contract';
 import { extractContract } from '../utils/contractExtractor';
 
+// In development: empty string → Vite proxy forwards /api/* to localhost:3001
+// In production:  set VITE_API_URL=https://your-app.railway.app in Vercel env vars
+const BASE_URL = (import.meta.env.VITE_API_URL as string) || '';
+
 export interface StructuredLogEntry {
   id: string;
   timestamp: string;
@@ -26,7 +30,7 @@ const LOCAL_STORAGE_KEY_LOGS = 'aggroso_logs_v1';
 // Health Check
 export async function getBackendHealth(): Promise<BackendHealth | null> {
   try {
-    const res = await fetch('/api/health');
+    const res = await fetch(`${BASE_URL}/api/health`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -37,7 +41,7 @@ export async function getBackendHealth(): Promise<BackendHealth | null> {
 // Contracts Persistence
 export async function getSavedContracts(): Promise<ContractVersion[]> {
   try {
-    const res = await fetch('/api/contracts');
+    const res = await fetch(`${BASE_URL}/api/contracts`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -69,7 +73,7 @@ export async function saveContracts(versions: ContractVersion[]): Promise<void> 
 
   // Persist to backend
   try {
-    await fetch('/api/contracts', {
+    await fetch(`${BASE_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ versions }),
@@ -82,7 +86,7 @@ export async function saveContracts(versions: ContractVersion[]): Promise<void> 
 // Policy Persistence
 export async function getSavedPolicy(): Promise<OrganizationalPolicy | null> {
   try {
-    const res = await fetch('/api/policy');
+    const res = await fetch(`${BASE_URL}/api/policy`);
     if (res.ok) {
       const data = await res.json();
       if (data) {
@@ -115,7 +119,7 @@ export async function savePolicy(policy: OrganizationalPolicy | null): Promise<v
   }
 
   try {
-    await fetch('/api/policy', {
+    await fetch(`${BASE_URL}/api/policy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ policy }),
@@ -133,7 +137,7 @@ export async function runAiContractAnalysis(
   policy?: OrganizationalPolicy
 ): Promise<{ version: ContractVersion; provider: 'GEMINI_AI' | 'LOCAL_HEURISTICS' }> {
   try {
-    const res = await fetch('/api/ai/extract', {
+    const res = await fetch(`${BASE_URL}/api/ai/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, fileName, versionNumber, policy }),
@@ -161,7 +165,7 @@ export async function askAiAgentAboutClause(
   contextTitle: string
 ): Promise<string> {
   try {
-    const res = await fetch('/api/ai/advise', {
+    const res = await fetch(`${BASE_URL}/api/ai/advise`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clauseText, userQuestion, contextTitle }),
@@ -179,7 +183,7 @@ export async function askAiAgentAboutClause(
 // Structured Logging
 export async function getStructuredLogs(limit = 100): Promise<StructuredLogEntry[]> {
   try {
-    const res = await fetch(`/api/logs?limit=${limit}`);
+    const res = await fetch(`${BASE_URL}/api/logs?limit=${limit}`);
     if (res.ok) {
       const logs = await res.json();
       return logs;
@@ -223,7 +227,7 @@ export async function logStructuredEvent(
 
   // Post to backend
   try {
-    await fetch('/api/logs', {
+    await fetch(`${BASE_URL}/api/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
