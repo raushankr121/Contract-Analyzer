@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ListChecks, 
   CalendarClock, 
@@ -69,6 +69,7 @@ export const App: React.FC = () => {
 
   // Persistence Initialized Flag
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const hasInitializedRef = useRef<boolean>(false);
 
   // AI Loading & Analysis State
   const [aiAnalyzing, setAiAnalyzing] = useState<{ isAnalyzing: boolean; message: string }>({
@@ -113,6 +114,9 @@ export const App: React.FC = () => {
 
   // 1. Initial Load from Backend & LocalStorage Persistence
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
     const initData = async () => {
       try {
         const [savedVersions, savedPolicy] = await Promise.all([

@@ -186,11 +186,11 @@ app.delete('/api/logs', (req: Request, res: Response) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   appendLog({
     level: 'INFO',
     module: 'API',
     message: `Contract Obligation Assistant backend server active on port ${PORT}`,
   });
-  console.log(`Backend server ready at http://localhost:${PORT}`);
+  console.log(`Backend server ready at http://127.0.0.1:${PORT}`);
 });
