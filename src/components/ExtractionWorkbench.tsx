@@ -13,7 +13,8 @@ import {
   AlertCircle, 
   Clock, 
   ShieldCheck, 
-  RotateCcw 
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import type { 
   ContractVersion, 
@@ -32,6 +33,7 @@ interface ExtractionWorkbenchProps {
   onOpenEditModal: (item: any, type: string) => void;
   onApproveAllPending: () => void;
   onOpenSetDates?: () => void;
+  onOpenAiConsult?: (title: string, quote: string) => void;
 }
 
 export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
@@ -45,6 +47,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
   onOpenEditModal,
   onApproveAllPending,
   onOpenSetDates,
+  onOpenAiConsult,
 }) => {
   const renderStatusBadge = (status: ReviewStatus, staleReason?: string) => {
     switch (status) {
@@ -460,7 +463,17 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+          {onOpenAiConsult && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => onOpenAiConsult('Renewal Clause', version.renewal.exactQuote || version.renewal.renewalPeriodText)}
+              title="Consult Gemini AI Agent on renewal risk"
+              style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+            >
+              <Sparkles size={12} /> AI Advisor
+            </button>
+          )}
           <button
             className="btn btn-outline-success btn-sm"
             onClick={() => onUpdateRenewalStatus('APPROVED')}
@@ -520,7 +533,17 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             <div className="citation-quote">"{version.termination.exactQuote}"</div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.85rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+            {onOpenAiConsult && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onOpenAiConsult('Termination Clause', version.termination.exactQuote)}
+                title="Consult Gemini AI Agent on termination risk"
+                style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+              >
+                <Sparkles size={12} /> AI Advisor
+              </button>
+            )}
             <button
               className="btn btn-outline-success btn-sm"
               onClick={() => onUpdateTerminationStatus('APPROVED')}
@@ -580,7 +603,17 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.85rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+            {onOpenAiConsult && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onOpenAiConsult('Notice Clause', version.notice.exactQuote)}
+                title="Consult Gemini AI Agent on notice requirements"
+                style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+              >
+                <Sparkles size={12} /> AI Advisor
+              </button>
+            )}
             <button
               className="btn btn-outline-success btn-sm"
               onClick={() => onUpdateNoticeStatus('APPROVED')}
@@ -694,6 +727,16 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div className="action-btn-group">
+                      {onOpenAiConsult && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => onOpenAiConsult(item.title, item.exactQuote || item.description)}
+                          title="Consult Gemini AI Agent on this obligation"
+                          style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+                        >
+                          <Sparkles size={12} />
+                        </button>
+                      )}
                       {item.status !== 'APPROVED' ? (
                         <button
                           className="btn btn-outline-success btn-sm"

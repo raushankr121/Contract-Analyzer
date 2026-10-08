@@ -7,7 +7,8 @@ import {
   Download, 
   History, 
   BookOpen, 
-  PlusCircle
+  PlusCircle,
+  Terminal
 } from 'lucide-react';
 import type { ContractVersion, OrganizationalPolicy } from '../types/contract';
 
@@ -22,6 +23,7 @@ interface HeaderProps {
   onLoadSamplePolicy: () => void;
   onLoadSampleV2: () => void;
   onExportSummary: () => void;
+  onOpenLogs?: () => void;
   onResetAll?: () => void;
 }
 
@@ -36,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadSamplePolicy,
   onLoadSampleV2,
   onExportSummary,
+  onOpenLogs,
   onResetAll,
 }) => {
   const hasContract = versions.length > 0 && currentVersion;
@@ -131,6 +134,18 @@ export const Header: React.FC<HeaderProps> = ({
           <FileText size={14} />
           {policy ? 'Update Policy' : 'Upload Policy'}
         </button>
+
+        {onOpenLogs && (
+          <button 
+            className="btn btn-secondary btn-sm" 
+            onClick={onOpenLogs}
+            title="Open Structured Logs & AI Workflow Stream"
+            style={{ borderColor: 'rgba(99, 102, 241, 0.4)', color: '#a5b4fc' }}
+          >
+            <Terminal size={14} />
+            AI & System Logs
+          </button>
+        )}
 
         {/* Export & Reset Buttons if contract loaded */}
         {hasContract && (

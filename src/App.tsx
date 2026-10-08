@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ListChecks, 
   CalendarClock, 
@@ -6,6 +6,7 @@ import {
   GitCompare, 
   FileText, 
   Eye,
+  Loader2,
 } from 'lucide-react';
 import type { 
   ContractVersion, 
@@ -37,17 +38,27 @@ import { EditItemModal } from './components/EditItemModal';
 import { UploadModal } from './components/UploadModal';
 import { DocumentIntakeHero } from './components/DocumentIntakeHero';
 import { OperationalDatesModal } from './components/OperationalDatesModal';
+import { LogsDrawer } from './components/LogsDrawer';
+import { AiConsultantModal } from './components/AiConsultantModal';
 import { 
   calculateRenewalDeadline, 
   generateDeterministicReminders, 
   addDays 
 } from './utils/deterministicDate';
+import {
+  getSavedContracts,
+  saveContracts,
+  getSavedPolicy,
+  savePolicy,
+  runAiContractAnalysis,
+  logStructuredEvent,
+} from './services/api';
 
 export const App: React.FC = () => {
   // Optional organizational policy state
   const [policy, setPolicy] = useState<OrganizationalPolicy | undefined>(undefined);
 
-  // Contract versions: BY DEFAULT EMPTY (Do NOT show any output initially!)
+  // Contract versions
   const [versions, setVersions] = useState<ContractVersion[]>([]);
   const [currentVersionId, setCurrentVersionId] = useState<string>('');
 
@@ -55,6 +66,29 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     'WORKBENCH' | 'TIMELINE' | 'CONFLICTS' | 'DIFF' | 'SUMMARY' | 'VIEWER'
   >('WORKBENCH');
+
+  // Persistence Initialized Flag
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+  // AI Loading & Analysis State
+  const [aiAnalyzing, setAiAnalyzing] = useState<{ isAnalyzing: boolean; message: string }>({
+    isAnalyzing: false,
+    message: '',
+  });
+
+  // Logs Drawer State
+  const [isLogsOpen, setIsLogsOpen] = useState<boolean>(false);
+
+  // AI Clause Consultant Modal State
+  const [aiConsultModal, setAiConsultModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    clauseText: string;
+  }>({
+    isOpen: false,
+    title: '',
+    clauseText: '',
+  });
 
   // Modal States
   const [uploadModalState, setUploadModalState] = useState<{
@@ -77,6 +111,49 @@ export const App: React.FC = () => {
 
   const [operationalDatesModalOpen, setOperationalDatesModalOpen] = useState(false);
 
+  // 1. Initial Load from Backend & LocalStorage Persistence
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        const [savedVersions, savedPolicy] = await Promise.all([
+          getSavedContracts(),
+          getSavedPolicy(),
+        ]);
+
+        if (savedVersions && savedVersions.length > 0) {
+          setVersions(savedVersions);
+          setCurrentVersionId(savedVersions[savedVersions.length - 1].id);
+        }
+        if (savedPolicy) {
+          setPolicy(savedPolicy);
+        }
+        await logStructuredEvent('INFO', 'STORAGE', 'Loaded persistent contract workspace state', {
+          versionsLoaded: savedVersions?.length || 0,
+          hasPolicy: !!savedPolicy,
+        });
+      } catch (err) {
+        console.warn('Initial persistence loading notice:', err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    initData();
+  }, []);
+
+  // 2. Auto-persist versions on updates
+  useEffect(() => {
+    if (isInitialized) {
+      saveContracts(versions);
+    }
+  }, [versions, isInitialized]);
+
+  // 3. Auto-persist policy on updates
+  useEffect(() => {
+    if (isInitialized) {
+      savePolicy(policy || null);
+    }
+  }, [policy, isInitialized]);
+
   const currentVersion = versions.find((v) => v.id === currentVersionId) || versions[0];
 
   // Helper to update current version and record audit log
@@ -89,18 +166,23 @@ export const App: React.FC = () => {
         if (v.id !== currentVersionId) return v;
         const updated = updater(v);
         if (auditAction) {
-          updated.auditLog = [
-            ...updated.auditLog,
-            {
-              id: `audit-${Date.now()}`,
-              itemId: auditAction.itemId || 'user-action',
-              itemType: auditAction.itemType || 'STATUS_UPDATE',
-              action: auditAction.action,
-              timestamp: new Date().toISOString(),
-              user: 'User / Auditor',
-              notes: auditAction.notes,
-            },
-          ];
+          const newRecord = {
+            id: `audit-${Date.now()}`,
+            itemId: auditAction.itemId || 'user-action',
+            itemType: auditAction.itemType || 'STATUS_UPDATE',
+            action: auditAction.action,
+            timestamp: new Date().toISOString(),
+            user: 'User / Human Reviewer',
+            notes: auditAction.notes,
+          };
+          updated.auditLog = [...updated.auditLog, newRecord];
+
+          // Structured Audit Log Entry
+          logStructuredEvent('AUDIT', 'HUMAN_REVIEW', `Human review action: ${auditAction.notes}`, {
+            action: auditAction.action,
+            itemId: auditAction.itemId,
+            itemType: auditAction.itemType,
+          });
         }
         return updated;
       })
@@ -388,22 +470,50 @@ export const App: React.FC = () => {
     );
   };
 
-  // Ingest contract document (v1 or new version v2)
-  const handleProcessContract = (text: string, fileName: string, isNewVersion: boolean) => {
+  // Ingest contract document (v1 or new version v2) with Gemini AI Agent
+  const handleProcessContract = async (text: string, fileName: string, isNewVersion: boolean) => {
     const nextVerNum = isNewVersion ? versions.length + 1 : 1;
-    const rawNewVersion = extractContract(text, fileName, nextVerNum, policy);
+    setAiAnalyzing({
+      isAnalyzing: true,
+      message: 'Gemini 2.5 Flash analyzing clauses, extracting obligations, and grounding citations...',
+    });
 
-    if (isNewVersion && versions.length > 0) {
-      // Reconcile against current version to flag stale items!
-      const comparison = reconcileNewVersion(currentVersion, rawNewVersion);
-      setVersions((prev) => [...prev, comparison.newVersion]);
-      setCurrentVersionId(comparison.newVersion.id);
-      setActiveTab('DIFF'); // Switch to diff view to highlight staleness!
-    } else {
-      // Replace or set as v1
-      setVersions([rawNewVersion]);
-      setCurrentVersionId(rawNewVersion.id);
+    try {
+      const { version: analyzedVersion, provider } = await runAiContractAnalysis(
+        text,
+        fileName,
+        nextVerNum,
+        policy
+      );
+
+      await logStructuredEvent(
+        'AI_AGENT',
+        'GEMINI_AGENT',
+        `Contract analyzed via ${provider === 'GEMINI_AI' ? 'Google Gemini 2.5 Flash' : 'Deterministic Heuristics Engine'}`,
+        { fileName, provider, obligationsCount: analyzedVersion.obligations.length }
+      );
+
+      if (isNewVersion && versions.length > 0) {
+        // Reconcile against current version to flag stale items!
+        const comparison = reconcileNewVersion(currentVersion, analyzedVersion);
+        setVersions((prev) => [...prev, comparison.newVersion]);
+        setCurrentVersionId(comparison.newVersion.id);
+        setActiveTab('DIFF');
+      } else {
+        // Set as v1
+        setVersions([analyzedVersion]);
+        setCurrentVersionId(analyzedVersion.id);
+        setActiveTab('WORKBENCH');
+      }
+    } catch (err: any) {
+      console.error('Contract processing error:', err);
+      // Fallback
+      const fallback = extractContract(text, fileName, nextVerNum, policy);
+      setVersions([fallback]);
+      setCurrentVersionId(fallback.id);
       setActiveTab('WORKBENCH');
+    } finally {
+      setAiAnalyzing({ isAnalyzing: false, message: '' });
     }
   };
 
@@ -422,10 +532,13 @@ export const App: React.FC = () => {
       })
     );
     setActiveTab('CONFLICTS');
+    logStructuredEvent('INFO', 'STORAGE', `Imported organizational procurement policy: ${fileName}`, {
+      rulesCount: newPolicy.rules.length,
+    });
   };
 
   // Handle analysis from the initial intake hero screen
-  const handleAnalyzeContract = (
+  const handleAnalyzeContract = async (
     contractText: string,
     fileName: string,
     benchmarkPolicy?: OrganizationalPolicy
@@ -434,10 +547,39 @@ export const App: React.FC = () => {
     if (benchmarkPolicy) {
       setPolicy(benchmarkPolicy);
     }
-    const newVersion = extractContract(contractText, fileName, 1, activePolicy);
-    setVersions([newVersion]);
-    setCurrentVersionId(newVersion.id);
-    setActiveTab('WORKBENCH');
+
+    setAiAnalyzing({
+      isAnalyzing: true,
+      message: 'Google Gemini 2.5 Flash analyzing document structure, clauses, and commitments...',
+    });
+
+    try {
+      const { version: analyzedVersion, provider } = await runAiContractAnalysis(
+        contractText,
+        fileName,
+        1,
+        activePolicy
+      );
+
+      setVersions([analyzedVersion]);
+      setCurrentVersionId(analyzedVersion.id);
+      setActiveTab('WORKBENCH');
+
+      await logStructuredEvent(
+        'AI_AGENT',
+        'GEMINI_AGENT',
+        `Intake Hero: Contract analyzed via ${provider}`,
+        { fileName, obligations: analyzedVersion.obligations.length, provider }
+      );
+    } catch (e) {
+      console.error('Analysis error:', e);
+      const fallback = extractContract(contractText, fileName, 1, activePolicy);
+      setVersions([fallback]);
+      setCurrentVersionId(fallback.id);
+      setActiveTab('WORKBENCH');
+    } finally {
+      setAiAnalyzing({ isAnalyzing: false, message: '' });
+    }
   };
 
   // Reset all state to return to intake upload portal
@@ -445,6 +587,8 @@ export const App: React.FC = () => {
     setVersions([]);
     setCurrentVersionId('');
     setActiveTab('WORKBENCH');
+    saveContracts([]);
+    logStructuredEvent('INFO', 'STORAGE', 'Cleared all contract versions and reset state');
   };
 
   // Quick Demo Loaders
@@ -455,6 +599,7 @@ export const App: React.FC = () => {
     setVersions([v1]);
     setCurrentVersionId(v1.id);
     setActiveTab('WORKBENCH');
+    logStructuredEvent('INFO', 'STORAGE', 'Loaded Sample SaaS Agreement v1.0');
   };
 
   const handleLoadSamplePolicy = () => {
@@ -492,11 +637,34 @@ export const App: React.FC = () => {
         onLoadSamplePolicy={handleLoadSamplePolicy}
         onLoadSampleV2={handleLoadSampleV2}
         onExportSummary={() => setActiveTab('SUMMARY')}
+        onOpenLogs={() => setIsLogsOpen(true)}
         onResetAll={handleResetAll}
       />
 
       {/* Prominent Legal Disclaimer Banner */}
       <DisclaimerBanner />
+
+      {/* AI Processing Overlay */}
+      {aiAnalyzing.isAnalyzing && (
+        <div className="ai-loading-overlay">
+          <div className="ai-loading-card">
+            <Loader2 size={40} className="spinning text-accent" />
+            <h3 style={{ margin: '0.8rem 0 0.3rem', fontSize: '1.2rem', color: '#fff' }}>
+              Gemini 2.5 Flash AI Agent Active
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0, textAlign: 'center' }}>
+              {aiAnalyzing.message}
+            </p>
+            <div className="ai-loading-steps">
+              <span>📄 Parsing Text</span>
+              <span style={{ color: '#475569' }}>→</span>
+              <span className="step-active">🧠 Gemini Extracting Commitments</span>
+              <span style={{ color: '#475569' }}>→</span>
+              <span>📅 Calculating Deadlines</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Default Intake Screen vs Output Workbench */}
       {versions.length === 0 || !currentVersion ? (
@@ -579,6 +747,9 @@ export const App: React.FC = () => {
                 onOpenEditModal={(item, type) => setEditModalState({ isOpen: true, item, itemType: type })}
                 onApproveAllPending={handleApproveAllPending}
                 onOpenSetDates={() => setOperationalDatesModalOpen(true)}
+                onOpenAiConsult={(title, quote) =>
+                  setAiConsultModal({ isOpen: true, title, clauseText: quote })
+                }
               />
             )}
 
@@ -615,7 +786,7 @@ export const App: React.FC = () => {
         </>
       )}
 
-      {/* Modals */}
+      {/* Modals & Drawers */}
       <UploadModal
         isOpen={uploadModalState.isOpen}
         mode={uploadModalState.mode}
@@ -637,6 +808,18 @@ export const App: React.FC = () => {
         version={currentVersion}
         onClose={() => setOperationalDatesModalOpen(false)}
         onSaveDates={handleSaveOperationalDates}
+      />
+
+      <LogsDrawer
+        isOpen={isLogsOpen}
+        onClose={() => setIsLogsOpen(false)}
+      />
+
+      <AiConsultantModal
+        isOpen={aiConsultModal.isOpen}
+        onClose={() => setAiConsultModal({ ...aiConsultModal, isOpen: false })}
+        contextTitle={aiConsultModal.title}
+        clauseText={aiConsultModal.clauseText}
       />
     </div>
   );

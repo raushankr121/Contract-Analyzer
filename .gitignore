@@ -7,7 +7,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment and sensitive keys
+.env
+.env.local
+.env.*.local
 
+# Local database and storage
+data/
+data/*.json
+data/*.sqlite
+
+# Node modules and build output
 node_modules
 dist
 dist-ssr
