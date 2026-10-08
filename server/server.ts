@@ -17,8 +17,8 @@ import {
   loadLogs, 
   appendLog, 
   clearLogs 
-} from './storage.js';
-import { analyzeContractWithGemini, consultAiAgentOnClause } from './geminiService.js';
+} from './storage';
+import { analyzeContractWithGemini, consultAiAgentOnClause } from './geminiService';
 
 const app = express();
 const PORT = process.env.PORT || 3001;

@@ -199,7 +199,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {newVersion.auditLog.map((log) => (
+          {(newVersion?.auditLog || []).map((log) => (
             <div
               key={log.id}
               style={{

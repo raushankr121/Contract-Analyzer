@@ -65,9 +65,9 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
     window.print();
   };
 
-  const approvedObligations = version.obligations.filter((o) => o.status === 'APPROVED');
-  const staleObligations = version.obligations.filter((o) => o.status === 'STALE');
-  const daysUntilRenewal = getDaysRemaining(version.renewal.deterministicRenewalDeadline);
+  const approvedObligations = (version?.obligations || []).filter((o) => o.status === 'APPROVED');
+  const staleObligations = (version?.obligations || []).filter((o) => o.status === 'STALE');
+  const daysUntilRenewal = version?.renewal?.deterministicRenewalDeadline ? getDaysRemaining(version.renewal.deterministicRenewalDeadline) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -112,16 +112,16 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
                 REVIEWED AUDIT SUMMARY
               </span>
               <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff' }}>
-                {version.fileName}
+                {version?.fileName || 'Contract'}
               </h1>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Version: <strong>{version.versionLabel}</strong> | Audit Date: <strong>{formatFriendlyDate(version.uploadedAt.split('T')[0])}</strong>
+                Version: <strong>{version?.versionLabel || 'v1.0'}</strong> | Audit Date: <strong>{formatFriendlyDate(version?.uploadedAt ? version.uploadedAt.split('T')[0] : '')}</strong>
               </div>
             </div>
 
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399' }}>
-                {approvedObligations.length} / {version.obligations.length} Approved
+                {approvedObligations.length} / {version?.obligations?.length || 0} Approved
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 {staleObligations.length > 0 ? `⚠️ ${staleObligations.length} items flagged stale` : 'Zero stale clauses'}
@@ -159,7 +159,7 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {version.parties.map((p) => (
+                {(version?.parties || []).map((p) => (
                   <tr key={p.id}>
                     <td><strong>{p.role}</strong></td>
                     <td>{p.name} ({p.jurisdiction})</td>
@@ -169,25 +169,27 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
                 ))}
                 <tr>
                   <td><strong>Effective Date</strong></td>
-                  <td>{formatFriendlyDate(version.dates.effectiveDate.value)}</td>
-                  <td><span className="pill pill-approved">{version.dates.effectiveDate.status}</span></td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version.dates.effectiveDate.citation}</td>
+                  <td>{formatFriendlyDate(version?.dates?.effectiveDate?.value || '')}</td>
+                  <td><span className="pill pill-approved">{version?.dates?.effectiveDate?.status || 'PENDING'}</span></td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version?.dates?.effectiveDate?.citation || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td><strong>Initial Term</strong></td>
-                  <td>{version.dates.initialTerm.value}</td>
-                  <td><span className="pill pill-approved">{version.dates.initialTerm.status}</span></td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version.dates.initialTerm.citation}</td>
+                  <td>{version?.dates?.initialTerm?.value || 'Unstated'}</td>
+                  <td><span className="pill pill-approved">{version?.dates?.initialTerm?.status || 'PENDING'}</span></td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version?.dates?.initialTerm?.citation || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td><strong>Contract Expiration</strong></td>
                   <td>
-                    {!version.dates.expiryDate.value.includes('Unstated') && !version.dates.expiryDate.value.includes('XXX')
+                    {version?.dates?.expiryDate?.value &&
+                    !version.dates.expiryDate.value.includes('Unstated') && 
+                    !version.dates.expiryDate.value.includes('XXX')
                       ? `${formatFriendlyDate(version.dates.expiryDate.value)} (${getDaysRemaining(version.dates.expiryDate.value)} days remaining)`
-                      : version.dates.expiryDate.value}
+                      : version?.dates?.expiryDate?.value || 'Unstated'}
                   </td>
-                  <td><span className="pill pill-approved">{version.dates.expiryDate.status}</span></td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version.dates.expiryDate.citation}</td>
+                  <td><span className="pill pill-approved">{version?.dates?.expiryDate?.status || 'PENDING'}</span></td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{version?.dates?.expiryDate?.citation || 'N/A'}</td>
                 </tr>
               </tbody>
             </table>
@@ -203,15 +205,15 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
             <div style={{ background: 'rgba(15,23,42,0.6)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>RENEWAL STRUCTURE</div>
               <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginTop: '0.2rem' }}>
-                {version.renewal.type === 'NO_RENEWAL'
+                {version?.renewal?.type === 'NO_RENEWAL'
                   ? 'No Auto-Renewal Provision (Fixed Term)'
-                  : version.renewal.type === 'AUTO_RENEWAL'
+                  : version?.renewal?.type === 'AUTO_RENEWAL'
                   ? 'Automatic Rollover'
                   : 'Fixed Term'}{' '}
-                ({version.renewal.renewalPeriodText})
+                ({version?.renewal?.renewalPeriodText || 'Fixed Term'})
               </div>
-              <div style={{ fontSize: '0.8rem', color: version.renewal.noticeWindowDays > 0 ? '#fbbf24' : '#94a3b8', marginTop: '0.4rem' }}>
-                {version.renewal.noticeWindowDays > 0
+              <div style={{ fontSize: '0.8rem', color: (version?.renewal?.noticeWindowDays ?? 0) > 0 ? '#fbbf24' : '#94a3b8', marginTop: '0.4rem' }}>
+                {(version?.renewal?.noticeWindowDays ?? 0) > 0
                   ? `Notice Window: ${version.renewal.noticeWindowDays} calendar days advance written notice`
                   : 'Notice Window: N/A (Contract is silent on renewal)'}
               </div>
@@ -219,13 +221,13 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
 
             <div style={{ background: 'rgba(15,23,42,0.6)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>DETERMINISTIC DECISION DEADLINE</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: version.renewal.deterministicRenewalDeadline === 'N/A' ? '#cbd5e1' : 'var(--brand-gold-light)', marginTop: '0.2rem' }}>
-                {version.renewal.deterministicRenewalDeadline === 'N/A'
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: !version?.renewal?.deterministicRenewalDeadline || version.renewal.deterministicRenewalDeadline === 'N/A' ? '#cbd5e1' : 'var(--brand-gold-light)', marginTop: '0.2rem' }}>
+                {!version?.renewal?.deterministicRenewalDeadline || version.renewal.deterministicRenewalDeadline === 'N/A'
                   ? 'N/A — Not Mentioned in PDF'
                   : formatFriendlyDate(version.renewal.deterministicRenewalDeadline)}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                {version.renewal.deterministicRenewalDeadline === 'N/A'
+                {!version?.renewal?.deterministicRenewalDeadline || version.renewal.deterministicRenewalDeadline === 'N/A'
                   ? 'Fixed-term services • Performance concludes on expiration'
                   : `${daysUntilRenewal} calendar days remaining`}
               </div>
@@ -233,12 +235,12 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
           </div>
 
           <div className="formula-box" style={{ marginBottom: '1rem' }}>
-            <code>{version.renewal.calculationFormula}</code>
+            <code>{version?.renewal?.calculationFormula || 'N/A'}</code>
           </div>
 
           <div style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
             <strong>Scheduled Reminder Triggers:</strong>
-            {version.renewal.reminders && version.renewal.reminders.length > 0 ? (
+            {version?.renewal?.reminders && version.renewal.reminders.length > 0 ? (
               <ul style={{ paddingLeft: '1.25rem', marginTop: '0.35rem', lineHeight: 1.6 }}>
                 {version.renewal.reminders.map((r) => (
                   <li key={r.id}>
@@ -294,7 +296,7 @@ export const ReviewedSummaryView: React.FC<ReviewedSummaryViewProps> = ({
             4. Ambiguities, AI Clarification Questions & Policy Alignment
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {version.conflicts.map((c, i) => (
+            {(version?.conflicts || []).map((c, i) => (
               <div
                 key={c.id}
                 style={{

@@ -21,26 +21,32 @@ export const StatCards: React.FC<StatCardsProps> = ({
   onOpenSetDates,
   onOpenEditRenewal,
 }) => {
+  const renewalDeadline = version?.renewal?.deterministicRenewalDeadline;
   const hasNoRenewal = 
+    !version?.renewal ||
     version.renewal.type === 'NO_RENEWAL' ||
-    !version.renewal.deterministicRenewalDeadline ||
-    version.renewal.deterministicRenewalDeadline === 'N/A' ||
-    version.renewal.deterministicRenewalDeadline.includes('Unstated');
+    !renewalDeadline ||
+    renewalDeadline === 'N/A' ||
+    renewalDeadline.includes('Unstated');
 
-  const daysUntilRenewalDeadline = hasNoRenewal ? 0 : getDaysRemaining(version.renewal.deterministicRenewalDeadline);
+  const daysUntilRenewalDeadline = (hasNoRenewal || !renewalDeadline) ? 0 : getDaysRemaining(renewalDeadline);
 
+  const expiryValue = version?.dates?.expiryDate?.value;
   const isExpiryValid = 
-    !version.dates.expiryDate.value.includes('Unstated') && 
-    !version.dates.expiryDate.value.includes('XXX');
-  const daysUntilExpiry = isExpiryValid ? getDaysRemaining(version.dates.expiryDate.value) : null;
+    Boolean(expiryValue && 
+    !expiryValue.includes('Unstated') && 
+    !expiryValue.includes('XXX'));
+  const daysUntilExpiry = isExpiryValid && expiryValue ? getDaysRemaining(expiryValue) : null;
 
-  const totalObligations = version.obligations.length;
-  const approvedObligations = version.obligations.filter((o) => o.status === 'APPROVED').length;
-  const pendingObligations = version.obligations.filter((o) => o.status === 'PENDING').length;
-  const staleObligations = version.obligations.filter((o) => o.status === 'STALE').length;
+  const obligations = version?.obligations || [];
+  const totalObligations = obligations.length;
+  const approvedObligations = obligations.filter((o) => o.status === 'APPROVED').length;
+  const pendingObligations = obligations.filter((o) => o.status === 'PENDING').length;
+  const staleObligations = obligations.filter((o) => o.status === 'STALE').length;
 
-  const openConflicts = version.conflicts.filter((c) => c.status === 'OPEN').length;
-  const policyViolations = version.conflicts.filter((c) => c.conflictType === 'POLICY_VIOLATION' && c.status === 'OPEN').length;
+  const conflicts = version?.conflicts || [];
+  const openConflicts = conflicts.filter((c) => c.status === 'OPEN').length;
+  const policyViolations = conflicts.filter((c) => c.conflictType === 'POLICY_VIOLATION' && c.status === 'OPEN').length;
 
   return (
     <div className="stats-grid">
@@ -97,10 +103,10 @@ export const StatCards: React.FC<StatCardsProps> = ({
             </div>
           ) : (
             <>
-              <strong style={{ color: 'var(--brand-gold-light)' }}>Cutoff:</strong> {formatFriendlyDate(version.renewal.deterministicRenewalDeadline)}
+              <strong style={{ color: 'var(--brand-gold-light)' }}>Cutoff:</strong> {formatFriendlyDate(version?.renewal?.deterministicRenewalDeadline || '')}
               <br />
               <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                ({version.renewal.noticeWindowDays}d notice required before {version.dates.expiryDate.value})
+                ({version?.renewal?.noticeWindowDays ?? 30}d notice required before {version?.dates?.expiryDate?.value || 'Unstated'})
               </span>
             </>
           )}
@@ -146,7 +152,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
         </div>
         <div className="stat-card-value">
           {isExpiryValid ? (
-            <span style={{ color: '#ffffff' }}>{formatFriendlyDate(version.dates.expiryDate.value)}</span>
+            <span style={{ color: '#ffffff' }}>{formatFriendlyDate(version?.dates?.expiryDate?.value || '')}</span>
           ) : (
             <span style={{ color: '#f59e0b', fontSize: '1.2rem' }}>
               Unstated in PDF
@@ -154,11 +160,11 @@ export const StatCards: React.FC<StatCardsProps> = ({
           )}
         </div>
         <div className="stat-card-subtext">
-          <strong style={{ color: 'var(--brand-gold-light)' }}>Term:</strong> {version.dates.initialTerm.value}
+          <strong style={{ color: 'var(--brand-gold-light)' }}>Term:</strong> {version?.dates?.initialTerm?.value || 'Unstated'}
           <br />
           {isExpiryValid ? (
             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              Commenced: {formatFriendlyDate(version.dates.effectiveDate.value)} ({daysUntilExpiry} days remaining)
+              Commenced: {formatFriendlyDate(version?.dates?.effectiveDate?.value || '')} ({daysUntilExpiry} days remaining)
             </span>
           ) : (
             <div style={{ marginTop: '0.25rem' }}>

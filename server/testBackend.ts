@@ -33,6 +33,9 @@ if (retrievedLogs.length >= 1 && retrievedLogs[0].message === 'Test agent execut
 
 // Test 2: Contracts Database Persistence
 console.log('\n[TEST 2] Contracts Persistence CRUD:');
+const initialContracts = loadContracts();
+const initialPolicy = loadPolicy();
+
 const mockVersion = {
   id: 'ver-test-1',
   versionNumber: 1,
@@ -40,14 +43,28 @@ const mockVersion = {
   fileName: 'test_agreement.pdf',
   uploadedAt: new Date().toISOString(),
   parties: [],
-  dates: { effectiveDate: { value: '2025-01-01' } },
-  renewal: { type: 'AUTO_RENEWAL' },
+  dates: {
+    effectiveDate: { value: '2025-01-01', status: 'APPROVED', certainty: 'CONFIRMED', citation: 'Sec 1' },
+    initialTerm: { value: '1 year', status: 'APPROVED', certainty: 'CONFIRMED', citation: 'Sec 1' },
+    expiryDate: { value: '2026-01-01', status: 'APPROVED', certainty: 'CONFIRMED', citation: 'Sec 1' },
+  },
+  renewal: {
+    type: 'AUTO_RENEWAL',
+    renewalPeriodText: '1 year',
+    noticeWindowDays: 30,
+    deterministicRenewalDeadline: '2025-12-02',
+    calculationFormula: '2026-01-01 minus 30 days',
+    citation: 'Sec 2',
+    exactQuote: 'Renews automatically',
+    status: 'APPROVED',
+    certainty: 'CONFIRMED',
+  },
   obligations: [],
   conflicts: [],
   auditLog: []
 };
 
-saveContracts([mockVersion]);
+saveContracts([mockVersion as any]);
 const loaded = loadContracts();
 if (loaded.length === 1 && loaded[0].id === 'ver-test-1') {
   console.log('✓ PASS: Contract version successfully saved to data/contracts.json and reloaded.');
@@ -62,13 +79,18 @@ const mockPolicy = {
   fileName: 'Procurement_Standard.txt',
   rules: []
 };
-savePolicy(mockPolicy);
+savePolicy(mockPolicy as any);
 const loadedPolicy = loadPolicy();
 if (loadedPolicy && loadedPolicy.id === 'pol-test-1') {
   console.log('✓ PASS: Organizational policy successfully persisted to data/policy.json.');
 } else {
   console.error('FAIL: Policy persistence failed.');
 }
+
+// Clean up test data so workspace storage is never polluted
+saveContracts(initialContracts);
+savePolicy(initialPolicy);
+console.log('✓ Storage state cleanly restored to pre-test baseline.');
 
 // Test 4: Gemini AI Agent Workflow Execution
 console.log('\n[TEST 4] Gemini AI Agent Workflow Execution:');

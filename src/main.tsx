@@ -68,8 +68,16 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
               {this.state.error?.message || 'Unknown error'}
             </pre>
             <button
-              onClick={() => {
+              onClick={async () => {
                 localStorage.removeItem('aggroso_contracts_v1');
+                localStorage.removeItem('aggroso_policy_v1');
+                try {
+                  await fetch('/api/contracts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([]),
+                  });
+                } catch (_) {}
                 window.location.reload();
               }}
               style={{

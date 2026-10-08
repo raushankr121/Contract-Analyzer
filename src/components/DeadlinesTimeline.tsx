@@ -40,31 +40,33 @@ export const DeadlinesTimeline: React.FC<DeadlinesTimelineProps> = ({ version })
   // Compile all chronological events
   const events: TimelineEvent[] = [];
 
+  const renewalDeadline = version?.renewal?.deterministicRenewalDeadline;
   const hasNoRenewal = 
+    !version?.renewal ||
     version.renewal.type === 'NO_RENEWAL' ||
-    !version.renewal.deterministicRenewalDeadline ||
-    version.renewal.deterministicRenewalDeadline === 'N/A' ||
-    version.renewal.deterministicRenewalDeadline.includes('Unstated');
+    !renewalDeadline ||
+    renewalDeadline === 'N/A' ||
+    renewalDeadline.includes('Unstated');
 
   // 1. Renewal Deadline Main Event (Only if renewal clause exists)
-  if (!hasNoRenewal) {
-    const renewalDays = getDaysRemaining(version.renewal.deterministicRenewalDeadline);
+  if (!hasNoRenewal && renewalDeadline) {
+    const renewalDays = getDaysRemaining(renewalDeadline);
     events.push({
       id: 'evt-renewal-main',
       type: 'RENEWAL_DEADLINE',
       title: 'Non-Renewal Decision & Written Notice Deadline',
       category: 'RENEWAL_NOTICE',
       responsibleParty: 'Mutual / Either Party',
-      targetDate: version.renewal.deterministicRenewalDeadline,
+      targetDate: renewalDeadline,
       daysRemaining: renewalDays,
       urgency: getUrgencyTier(renewalDays),
-      formulaDescription: version.renewal.calculationFormula,
-      citation: version.renewal.citation,
-      status: version.renewal.status,
+      formulaDescription: version.renewal?.calculationFormula || 'Deterministic renewal calculation',
+      citation: version.renewal?.citation || 'Renewal provision',
+      status: version.renewal?.status || 'PENDING',
     });
 
     // 1b. Renewal Sub-reminders (T-90, T-60, T-30, etc.)
-    if (showSubReminders && version.renewal.reminders && version.renewal.reminders.length > 0) {
+    if (showSubReminders && version.renewal?.reminders && version.renewal.reminders.length > 0) {
       version.renewal.reminders.forEach((r) => {
         const rDays = getDaysRemaining(r.date);
         events.push({
@@ -76,8 +78,8 @@ export const DeadlinesTimeline: React.FC<DeadlinesTimelineProps> = ({ version })
           targetDate: r.date,
           daysRemaining: rDays,
           urgency: getUrgencyTier(rDays),
-          formulaDescription: `Deterministic alert scheduled ${r.daysBefore} days prior to renewal cutoff (${version.renewal.deterministicRenewalDeadline})`,
-          citation: version.renewal.citation,
+          formulaDescription: `Deterministic alert scheduled ${r.daysBefore} days prior to renewal cutoff (${renewalDeadline})`,
+          citation: version.renewal?.citation || 'Renewal notice schedule',
           status: 'SCHEDULED',
           isReminderOnly: true,
         });
@@ -86,26 +88,27 @@ export const DeadlinesTimeline: React.FC<DeadlinesTimelineProps> = ({ version })
   }
 
   // 2. Contract Expiry Event
-  const isExpiryValid = !version.dates.expiryDate.value.includes('Unstated') && !version.dates.expiryDate.value.includes('XXX');
-  const expiryDays = isExpiryValid ? getDaysRemaining(version.dates.expiryDate.value) : 999;
+  const expiryVal = version?.dates?.expiryDate?.value || '';
+  const isExpiryValid = Boolean(expiryVal && !expiryVal.includes('Unstated') && !expiryVal.includes('XXX'));
+  const expiryDays = isExpiryValid ? getDaysRemaining(expiryVal) : 999;
   events.push({
     id: 'evt-expiry',
     type: 'RENEWAL_DEADLINE',
-    title: `Contract Term Expiration (${version.dates.initialTerm.value})`,
+    title: `Contract Term Expiration (${version?.dates?.initialTerm?.value || 'Unstated'})`,
     category: 'EXPIRATION',
     responsibleParty: 'Mutual',
-    targetDate: version.dates.expiryDate.value,
+    targetDate: expiryVal || 'Unstated',
     daysRemaining: expiryDays,
     urgency: isExpiryValid ? getUrgencyTier(expiryDays) : { tier: 'LATER', label: 'Unspecified in PDF', colorClass: 'badge-neutral' },
     formulaDescription: isExpiryValid 
       ? `Initial Term End Date as stated in Section 1.1`
       : `Performance Period in Schedule I Section 2 lists unpopulated placeholder 'XXX'`,
-    citation: version.dates.expiryDate.citation,
-    status: version.dates.expiryDate.status,
+    citation: version?.dates?.expiryDate?.citation || 'Term provision',
+    status: version?.dates?.expiryDate?.status || 'PENDING',
   });
 
   // 3. Operational Obligations
-  version.obligations.forEach((ob) => {
+  (version?.obligations || []).forEach((ob) => {
     // Check if targetDate is a valid ISO date
     const isIso = /^\d{4}-\d{2}-\d{2}$/.test(ob.targetDate);
     const obDays = isIso ? getDaysRemaining(ob.targetDate) : 180; // default order for conditional events

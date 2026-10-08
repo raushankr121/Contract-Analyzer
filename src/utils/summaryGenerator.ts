@@ -10,20 +10,23 @@ export function generateReviewedContractSummaryMarkdown(
   version: ContractVersion,
   policy?: OrganizationalPolicy
 ): string {
-  const approvedObligations = version.obligations.filter((o) => o.status === 'APPROVED');
-  const pendingObligations = version.obligations.filter((o) => o.status === 'PENDING');
-  const staleObligations = version.obligations.filter((o) => o.status === 'STALE');
+  const approvedObligations = (version?.obligations || []).filter((o) => o.status === 'APPROVED');
+  const pendingObligations = (version?.obligations || []).filter((o) => o.status === 'PENDING');
+  const staleObligations = (version?.obligations || []).filter((o) => o.status === 'STALE');
   
-  const isExpiryValid = !version.dates.expiryDate.value.includes('Unstated') && !version.dates.expiryDate.value.includes('XXX');
-  const daysUntilExpiry = isExpiryValid ? getDaysRemaining(version.dates.expiryDate.value) : null;
+  const expiryVal = version?.dates?.expiryDate?.value || '';
+  const isExpiryValid = Boolean(expiryVal && !expiryVal.includes('Unstated') && !expiryVal.includes('XXX'));
+  const daysUntilExpiry = isExpiryValid ? getDaysRemaining(expiryVal) : null;
+  const renewalDeadline = version?.renewal?.deterministicRenewalDeadline;
   const hasNoRenewal = 
+    !version?.renewal ||
     version.renewal.type === 'NO_RENEWAL' ||
-    !version.renewal.deterministicRenewalDeadline ||
-    version.renewal.deterministicRenewalDeadline === 'N/A';
-  const daysUntilRenewalNotice = hasNoRenewal ? 0 : getDaysRemaining(version.renewal.deterministicRenewalDeadline);
+    !renewalDeadline ||
+    renewalDeadline === 'N/A';
+  const daysUntilRenewalNotice = hasNoRenewal || !renewalDeadline ? 0 : getDaysRemaining(renewalDeadline);
 
   let md = `# EXECUTIVE CONTRACT OBLIGATION & RENEWAL SUMMARY
-**Document:** ${version.fileName} | **Version:** ${version.versionLabel}  
+**Document:** ${version?.fileName || 'Contract'} | **Version:** ${version?.versionLabel || 'v1.0'}  
 **Generated Date:** ${new Date().toLocaleDateString()}  
 **System Status:** Complete Audit Review
 
@@ -37,31 +40,31 @@ export function generateReviewedContractSummaryMarkdown(
 
 | Parameter | Details | Status | Citation |
 | :--- | :--- | :--- | :--- |
-${version.parties
+${(version?.parties || [])
   .map(
     (p) =>
       `| **${p.role}** | ${p.name} (${p.jurisdiction || 'N/A'}) | \`${p.status}\` | ${p.citation} |`
   )
   .join('\n')}
-| **Effective Date** | ${formatFriendlyDate(version.dates.effectiveDate.value)} | \`${version.dates.effectiveDate.status}\` | ${version.dates.effectiveDate.citation} |
-| **Initial Term** | ${version.dates.initialTerm.value} | \`${version.dates.initialTerm.status}\` | ${version.dates.initialTerm.citation} |
-| **Contract Expiration** | ${isExpiryValid ? `${formatFriendlyDate(version.dates.expiryDate.value)} (${daysUntilExpiry} days remaining)` : version.dates.expiryDate.value} | \`${version.dates.expiryDate.status}\` | ${version.dates.expiryDate.citation} |
+| **Effective Date** | ${formatFriendlyDate(version?.dates?.effectiveDate?.value || '')} | \`${version?.dates?.effectiveDate?.status || 'PENDING'}\` | ${version?.dates?.effectiveDate?.citation || 'N/A'} |
+| **Initial Term** | ${version?.dates?.initialTerm?.value || 'Unstated'} | \`${version?.dates?.initialTerm?.status || 'PENDING'}\` | ${version?.dates?.initialTerm?.citation || 'N/A'} |
+| **Contract Expiration** | ${isExpiryValid ? `${formatFriendlyDate(expiryVal)} (${daysUntilExpiry} days remaining)` : expiryVal || 'Unstated'} | \`${version?.dates?.expiryDate?.status || 'PENDING'}\` | ${version?.dates?.expiryDate?.citation || 'N/A'} |
 
 ---
 
 ## 2. DETERMINISTIC RENEWAL & TERMINATION TIMELINE
 
 ### Auto-Renewal Mechanism & Deadlines
-- **Renewal Type:** ${hasNoRenewal ? 'No Auto-Renewal Provision (Fixed Term)' : version.renewal.type === 'AUTO_RENEWAL' ? 'Automatic Roll-over' : 'Fixed Term'} (${version.renewal.renewalPeriodText})
-- **Required Notice Window:** ${version.renewal.noticeWindowDays > 0 ? `${version.renewal.noticeWindowDays} calendar days advance written notice prior to term end` : 'N/A (Document contains no renewal clause)'}
-- **Deterministic Non-Renewal Deadline:** **${hasNoRenewal ? 'N/A — Not Mentioned in PDF' : formatFriendlyDate(version.renewal.deterministicRenewalDeadline)}**
-${hasNoRenewal ? '- **Days Until Decision Cutoff:** N/A (Fixed term contract)' : `- **Days Until Decision Cutoff:** **${daysUntilRenewalNotice} calendar days remaining**`}
-- **Calculation Formula:** \`${version.renewal.calculationFormula}\`
-- **Source Citation:** ${version.renewal.citation}
-- **Underlying Excerpt:** "${version.renewal.exactQuote}"
+- **Renewal Type:** ${hasNoRenewal ? 'No Auto-Renewal Provision (Fixed Term)' : version?.renewal?.type === 'AUTO_RENEWAL' ? 'Automatic Roll-over' : 'Fixed Term'} (${version?.renewal?.renewalPeriodText || 'Fixed Term'})
+- **Required Notice Window:** ${(version?.renewal?.noticeWindowDays ?? 0) > 0 ? `${version.renewal.noticeWindowDays} calendar days advance written notice prior to term end` : 'N/A (Document contains no renewal clause)'}
+- **Deterministic Non-Renewal Deadline:** **${hasNoRenewal || !renewalDeadline ? 'N/A — Not Mentioned in PDF' : formatFriendlyDate(renewalDeadline)}**
+${hasNoRenewal || !renewalDeadline ? '- **Days Until Decision Cutoff:** N/A (Fixed term contract)' : `- **Days Until Decision Cutoff:** **${daysUntilRenewalNotice} calendar days remaining**`}
+- **Calculation Formula:** \`${version?.renewal?.calculationFormula || 'N/A'}\`
+- **Source Citation:** ${version?.renewal?.citation || 'N/A'}
+- **Underlying Excerpt:** "${version?.renewal?.exactQuote || 'N/A'}"
 
 ### Deterministic Alert Trigger Schedule:
-${version.renewal.reminders && version.renewal.reminders.length > 0
+${version?.renewal?.reminders && version.renewal.reminders.length > 0
   ? version.renewal.reminders
       .map(
         (r) =>
@@ -71,9 +74,9 @@ ${version.renewal.reminders && version.renewal.reminders.length > 0
   : '- *No renewal alert triggers scheduled (Contract has no renewal clause and no renewal date mentioned in PDF).*'}
 
 ### Termination Framework
-- **Termination for Convenience:** ${version.termination.hasConvenienceTermination ? 'Permitted (Customer unilateral)' : 'Not permitted'} (${version.termination.convenienceNoticeDays} days advance notice required)
-- **Termination for Cause:** ${version.termination.hasCauseTermination ? 'Permitted with' : 'No'} ${version.termination.causeCurePeriodDays}-day written cure period
-- **Notice Standard:** Permitted delivery via ${version.notice.permittedMethods.join(', ')}. (Deemed received: ${version.notice.deemedReceivedDays} business days)
+- **Termination for Convenience:** ${version?.termination?.hasConvenienceTermination ? 'Permitted (Customer unilateral)' : 'Not permitted'} (${version?.termination?.convenienceNoticeDays ?? 0} days advance notice required)
+- **Termination for Cause:** ${version?.termination?.hasCauseTermination ? 'Permitted with' : 'No'} ${version?.termination?.causeCurePeriodDays ?? 0}-day written cure period
+- **Notice Standard:** Permitted delivery via ${(version?.notice?.permittedMethods || []).join(', ')}. (Deemed received: ${version?.notice?.deemedReceivedDays ?? 0} business days)
 
 ---
 
@@ -85,7 +88,7 @@ ${version.renewal.reminders && version.renewal.reminders.length > 0
 ${approvedObligations
   .map(
     (o) =>
-      `| \`${o.category}\` | **${o.title}**<br>*Party: ${o.responsibleParty}* | ${o.targetDate} (${o.recurrence}) | ${o.reminders.length > 0 ? o.reminders[0].label : 'Ad-hoc'} | ${o.citation} |`
+      `| \`${o.category}\` | **${o.title}**<br>*Party: ${o.responsibleParty}* | ${o.targetDate} (${o.recurrence}) | ${(o.reminders || []).length > 0 ? o.reminders[0].label : 'Ad-hoc'} | ${o.citation} |`
   )
   .join('\n')}
 
@@ -111,7 +114,7 @@ ${staleObligations
 ${
   policy
     ? `### Organizational Policy Benchmark: ${policy.fileName}
-${policy.rules
+${(policy.rules || [])
   .map(
     (r) =>
       `- **${r.ruleTitle}:** Standard is *${r.thresholdOrStandard}* (${r.citation})`
@@ -122,7 +125,7 @@ ${policy.rules
 }
 
 ### Identified Issues & Clarifications
-${version.conflicts
+${(version?.conflicts || [])
   .map(
     (c, i) => `#### ${i + 1}. [${c.severity}] ${c.title}
 - **Type:** \`${c.conflictType}\` | **Review Status:** \`${c.status}\`
@@ -143,7 +146,7 @@ ${c.userResolutionNote ? `- **User Resolution Note:** ${c.userResolutionNote}` :
 
 | Timestamp | Item / Action | User / Engine | Notes |
 | :--- | :--- | :--- | :--- |
-${version.auditLog
+${(version?.auditLog || [])
   .map(
     (a) =>
       `| ${new Date(a.timestamp).toLocaleString()} | \`${a.action}\` (${a.itemType}) | ${a.user} | ${a.notes || ''} |`

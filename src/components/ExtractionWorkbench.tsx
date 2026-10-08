@@ -49,6 +49,49 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
   onOpenSetDates,
   onOpenAiConsult,
 }) => {
+  const effectiveDate = version?.dates?.effectiveDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
+  const initialTerm = version?.dates?.initialTerm || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
+  const expiryDate = version?.dates?.expiryDate || { status: 'PENDING' as ReviewStatus, value: 'Unstated', certainty: 'UNCERTAIN_INTERPRETATION' as const, citation: 'N/A', exactQuote: '' };
+  const renewal = version?.renewal || {
+    type: 'NO_RENEWAL' as const,
+    renewalPeriodText: 'Fixed Term',
+    noticeWindowDays: 0,
+    deterministicRenewalDeadline: 'N/A',
+    calculationFormula: 'N/A',
+    citation: 'N/A',
+    exactQuote: '',
+    status: 'PENDING' as ReviewStatus,
+    certainty: 'CONFIRMED' as const,
+  };
+  const parties = version?.parties || [];
+  const obligations = version?.obligations || [];
+  const termination = version?.termination || {
+    hasConvenienceTermination: false,
+    convenienceNoticeDays: 0,
+    hasCauseTermination: false,
+    causeCurePeriodDays: 0,
+    citation: 'N/A',
+    exactQuote: '',
+    status: 'PENDING' as ReviewStatus,
+    certainty: 'CONFIRMED' as const,
+  };
+  const governingLaw = version?.governingLaw || {
+    jurisdiction: 'N/A',
+    disputeForum: 'N/A',
+    citation: 'N/A',
+    exactQuote: '',
+    status: 'PENDING' as ReviewStatus,
+    certainty: 'CONFIRMED' as const,
+  };
+  const notice = version?.notice || {
+    permittedMethods: ['Email'],
+    deemedReceivedDays: 1,
+    citation: 'N/A',
+    exactQuote: '',
+    status: 'PENDING' as ReviewStatus,
+    certainty: 'CONFIRMED' as const,
+  };
+
   const renderStatusBadge = (status: ReviewStatus, staleReason?: string) => {
     switch (status) {
       case 'APPROVED':
@@ -160,7 +203,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               </tr>
             </thead>
             <tbody>
-              {version.parties.map((party) => (
+              {parties.map((party) => (
                 <tr key={party.id}>
                   <td>
                     <div style={{ fontWeight: 700, color: '#fff' }}>{party.name}</div>
@@ -255,22 +298,22 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           <div style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Effective Date</span>
-              {renderStatusBadge(version.dates.effectiveDate.status, version.dates.effectiveDate.staleReason)}
+              {renderStatusBadge(effectiveDate.status, effectiveDate.staleReason)}
             </div>
             <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '0.35rem' }}>
-              {formatFriendlyDate(version.dates.effectiveDate.value)}
+              {formatFriendlyDate(effectiveDate.value)}
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              {renderCertaintyBadge(version.dates.effectiveDate.certainty)}
+              {renderCertaintyBadge(effectiveDate.certainty)}
             </div>
             <div className="citation-box">
-              <div className="citation-header">{version.dates.effectiveDate.citation}</div>
-              <div className="citation-quote">"{version.dates.effectiveDate.exactQuote}"</div>
+              <div className="citation-header">{effectiveDate.citation}</div>
+              <div className="citation-quote">"{effectiveDate.exactQuote}"</div>
             </div>
-            {version.dates.effectiveDate.clarificationQuestion && (
+            {effectiveDate.clarificationQuestion && (
               <div className="clarification-callout" style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
                 <HelpCircle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
-                <div>{version.dates.effectiveDate.clarificationQuestion}</div>
+                <div>{effectiveDate.clarificationQuestion}</div>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.75rem' }}>
@@ -282,7 +325,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               </button>
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => onOpenEditModal(version.dates.effectiveDate, 'DATE_EFFECTIVE')}
+                onClick={() => onOpenEditModal(effectiveDate, 'DATE_EFFECTIVE')}
               >
                 <Edit3 size={12} /> Edit
               </button>
@@ -293,17 +336,17 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           <div style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Initial Term Duration</span>
-              {renderStatusBadge(version.dates.initialTerm.status, version.dates.initialTerm.staleReason)}
+              {renderStatusBadge(initialTerm.status, initialTerm.staleReason)}
             </div>
             <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '0.35rem' }}>
-              {version.dates.initialTerm.value}
+              {initialTerm.value}
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              {renderCertaintyBadge(version.dates.initialTerm.certainty)}
+              {renderCertaintyBadge(initialTerm.certainty)}
             </div>
             <div className="citation-box">
-              <div className="citation-header">{version.dates.initialTerm.citation}</div>
-              <div className="citation-quote">"{version.dates.initialTerm.exactQuote}"</div>
+              <div className="citation-header">{initialTerm.citation}</div>
+              <div className="citation-quote">"{initialTerm.exactQuote}"</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.75rem' }}>
               <button
@@ -314,7 +357,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               </button>
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => onOpenEditModal(version.dates.initialTerm, 'DATE_TERM')}
+                onClick={() => onOpenEditModal(initialTerm, 'DATE_TERM')}
               >
                 <Edit3 size={12} /> Edit
               </button>
@@ -325,22 +368,22 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           <div style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Expiration Date</span>
-              {renderStatusBadge(version.dates.expiryDate.status, version.dates.expiryDate.staleReason)}
+              {renderStatusBadge(expiryDate.status, expiryDate.staleReason)}
             </div>
             <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b', marginBottom: '0.35rem' }}>
-              {formatFriendlyDate(version.dates.expiryDate.value)}
+              {formatFriendlyDate(expiryDate.value)}
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              {renderCertaintyBadge(version.dates.expiryDate.certainty)}
+              {renderCertaintyBadge(expiryDate.certainty)}
             </div>
             <div className="citation-box">
-              <div className="citation-header">{version.dates.expiryDate.citation}</div>
-              <div className="citation-quote">"{version.dates.expiryDate.exactQuote}"</div>
+              <div className="citation-header">{expiryDate.citation}</div>
+              <div className="citation-quote">"{expiryDate.exactQuote}"</div>
             </div>
-            {version.dates.expiryDate.clarificationQuestion && (
+            {expiryDate.clarificationQuestion && (
               <div className="clarification-callout" style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
                 <HelpCircle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
-                <div>{version.dates.expiryDate.clarificationQuestion}</div>
+                <div>{expiryDate.clarificationQuestion}</div>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.75rem' }}>
@@ -352,7 +395,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               </button>
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => onOpenEditModal(version.dates.expiryDate, 'DATE_EXPIRY')}
+                onClick={() => onOpenEditModal(expiryDate, 'DATE_EXPIRY')}
               >
                 <Edit3 size={12} /> Edit
               </button>
@@ -369,16 +412,16 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             Renewal Clause & Deterministic Calculation
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {renderCertaintyBadge(version.renewal.certainty)}
-            {renderStatusBadge(version.renewal.status, version.renewal.staleReason)}
+            {renderCertaintyBadge(renewal.certainty)}
+            {renderStatusBadge(renewal.status, renewal.staleReason)}
           </div>
         </div>
 
-        {version.renewal.status === 'STALE' && (
+        {renewal.status === 'STALE' && (
           <div className="stale-warning-callout">
             <AlertCircle size={18} style={{ color: '#f472b6', flexShrink: 0 }} />
             <div>
-              <strong>Clause Modified in New Version ({version.versionLabel}):</strong> {version.renewal.staleReason}
+              <strong>Clause Modified in New Version ({version?.versionLabel || 'v2.0'}):</strong> {renewal.staleReason}
               <br />
               <span style={{ fontSize: '0.76rem' }}>Previously approved terms are now marked potentially stale. Please verify before re-approving.</span>
             </div>
@@ -392,12 +435,12 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
                 Renewal Structure
               </span>
               <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginTop: '0.2rem' }}>
-                {version.renewal.type === 'NO_RENEWAL'
+                {renewal.type === 'NO_RENEWAL'
                   ? 'No Auto-Renewal Provision (Fixed Term)'
-                  : version.renewal.type === 'AUTO_RENEWAL'
+                  : renewal.type === 'AUTO_RENEWAL'
                   ? 'Automatic Rollover'
                   : 'Fixed Term'}{' '}
-                ({version.renewal.renewalPeriodText})
+                ({renewal.renewalPeriodText})
               </div>
             </div>
 
@@ -405,20 +448,20 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Required Notice Window
               </span>
-              <div style={{ fontSize: '0.95rem', fontWeight: 600, color: version.renewal.noticeWindowDays > 0 ? '#fbbf24' : '#94a3b8', marginTop: '0.2rem' }}>
-                {version.renewal.noticeWindowDays > 0
-                  ? `${version.renewal.noticeWindowDays} calendar days advance written notice prior to expiration`
+              <div style={{ fontSize: '0.95rem', fontWeight: 600, color: (renewal.noticeWindowDays ?? 0) > 0 ? '#fbbf24' : '#94a3b8', marginTop: '0.2rem' }}>
+                {(renewal.noticeWindowDays ?? 0) > 0
+                  ? `${renewal.noticeWindowDays} calendar days advance written notice prior to expiration`
                   : 'None specified (Document is silent on renewal notice)'}
               </div>
             </div>
 
-            {version.renewal.priceCapOrAdjustment && (
+            {renewal.priceCapOrAdjustment && (
               <div>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Price Cap / Fee Adjustment Terms
                 </span>
                 <div style={{ fontSize: '0.9rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
-                  {version.renewal.priceCapOrAdjustment}
+                  {renewal.priceCapOrAdjustment}
                 </div>
               </div>
             )}
@@ -428,18 +471,18 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Deterministic Non-Renewal Decision Deadline
             </span>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: version.renewal.deterministicRenewalDeadline === 'N/A' ? '#cbd5e1' : '#a5b4fc', marginTop: '0.25rem' }}>
-              {version.renewal.deterministicRenewalDeadline === 'N/A'
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: !renewal.deterministicRenewalDeadline || renewal.deterministicRenewalDeadline === 'N/A' ? '#cbd5e1' : '#a5b4fc', marginTop: '0.25rem' }}>
+              {!renewal.deterministicRenewalDeadline || renewal.deterministicRenewalDeadline === 'N/A'
                 ? 'N/A — Not Mentioned in PDF'
-                : formatFriendlyDate(version.renewal.deterministicRenewalDeadline)}
+                : formatFriendlyDate(renewal.deterministicRenewalDeadline)}
             </div>
 
             <div className="formula-box">
-              <code>{version.renewal.calculationFormula}</code>
+              <code>{renewal.calculationFormula}</code>
             </div>
 
             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-              {version.renewal.type === 'NO_RENEWAL' || version.renewal.deterministicRenewalDeadline === 'N/A'
+              {renewal.type === 'NO_RENEWAL' || !renewal.deterministicRenewalDeadline || renewal.deterministicRenewalDeadline === 'N/A'
                 ? 'The uploaded contract does not contain a renewal clause or renewal date. Performance concludes on contract expiration unless extended by written amendment.'
                 : 'Notice must be delivered on or prior to this date to prevent automatic commercial commitment.'}
             </div>
@@ -448,17 +491,17 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
 
         {/* Source Citation */}
         <div className="citation-box" style={{ marginTop: '1rem' }}>
-          <div className="citation-header">{version.renewal.citation}</div>
-          <div className="citation-quote">"{version.renewal.exactQuote}"</div>
+          <div className="citation-header">{renewal.citation}</div>
+          <div className="citation-quote">"{renewal.exactQuote}"</div>
         </div>
 
         {/* Ambiguity Clarification Question */}
-        {version.renewal.clarificationQuestion && (
+        {renewal.clarificationQuestion && (
           <div className="clarification-callout">
             <HelpCircle size={18} style={{ color: '#f59e0b', flexShrink: 0 }} />
             <div>
               <strong>Clarification Question for Ambiguous Clause:</strong>
-              <div style={{ marginTop: '0.2rem' }}>{version.renewal.clarificationQuestion}</div>
+              <div style={{ marginTop: '0.2rem' }}>{renewal.clarificationQuestion}</div>
             </div>
           </div>
         )}
@@ -467,7 +510,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           {onOpenAiConsult && (
             <button
               className="btn btn-secondary btn-sm"
-              onClick={() => onOpenAiConsult('Renewal Clause', version.renewal.exactQuote || version.renewal.renewalPeriodText)}
+              onClick={() => onOpenAiConsult('Renewal Clause', renewal.exactQuote || renewal.renewalPeriodText)}
               title="Consult Gemini AI Agent on renewal risk"
               style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
             >
@@ -478,7 +521,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             className="btn btn-outline-success btn-sm"
             onClick={() => onUpdateRenewalStatus('APPROVED')}
           >
-            <Check size={13} /> {version.renewal.status === 'STALE' ? 'Re-Approve Updated Renewal Terms' : 'Approve Clause'}
+            <Check size={13} /> {renewal.status === 'STALE' ? 'Re-Approve Updated Renewal Terms' : 'Approve Clause'}
           </button>
           <button
             className="btn btn-outline-danger btn-sm"
@@ -488,7 +531,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
           </button>
           <button
             className="btn btn-secondary btn-sm"
-            onClick={() => onOpenEditModal(version.renewal, 'RENEWAL')}
+            onClick={() => onOpenEditModal(renewal, 'RENEWAL')}
           >
             <Edit3 size={13} /> Edit Terms
           </button>
@@ -505,39 +548,39 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               Termination Framework
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {renderCertaintyBadge(version.termination.certainty)}
-              {renderStatusBadge(version.termination.status, version.termination.staleReason)}
+              {renderCertaintyBadge(termination.certainty)}
+              {renderStatusBadge(termination.status, termination.staleReason)}
             </div>
           </div>
 
           <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.75rem', lineHeight: 1.6 }}>
             <div>
               <strong>Termination for Convenience:</strong>{' '}
-              {version.termination.hasConvenienceTermination
-                ? `Permitted (${version.termination.convenienceNoticeDays} days advance notice)`
+              {termination.hasConvenienceTermination
+                ? `Permitted (${termination.convenienceNoticeDays} days advance notice)`
                 : 'Not Permitted'}
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                {version.termination.convenienceConditions}
+                {termination.convenienceConditions}
               </div>
             </div>
             <div style={{ marginTop: '0.5rem' }}>
-              <strong>Termination for Cause:</strong> Cure period of {version.termination.causeCurePeriodDays} calendar days upon written notice of breach.
+              <strong>Termination for Cause:</strong> Cure period of {termination.causeCurePeriodDays} calendar days upon written notice of breach.
             </div>
             <div style={{ marginTop: '0.5rem' }}>
-              <strong>Post-Termination Assistance:</strong> Data transition assistance for up to {version.termination.postTerminationTransitionDays || 60} days.
+              <strong>Post-Termination Assistance:</strong> Data transition assistance for up to {termination.postTerminationTransitionDays || 60} days.
             </div>
           </div>
 
           <div className="citation-box">
-            <div className="citation-header">{version.termination.citation}</div>
-            <div className="citation-quote">"{version.termination.exactQuote}"</div>
+            <div className="citation-header">{termination.citation}</div>
+            <div className="citation-quote">"{termination.exactQuote}"</div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
             {onOpenAiConsult && (
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => onOpenAiConsult('Termination Clause', version.termination.exactQuote)}
+                onClick={() => onOpenAiConsult('Termination Clause', termination.exactQuote)}
                 title="Consult Gemini AI Agent on termination risk"
                 style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
               >
@@ -552,7 +595,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             </button>
             <button
               className="btn btn-secondary btn-sm"
-              onClick={() => onOpenEditModal(version.termination, 'TERMINATION')}
+              onClick={() => onOpenEditModal(termination, 'TERMINATION')}
             >
               <Edit3 size={12} /> Edit
             </button>
@@ -567,38 +610,38 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               Formal Notice Requirements
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {renderCertaintyBadge(version.notice.certainty)}
-              {renderStatusBadge(version.notice.status, version.notice.staleReason)}
+              {renderCertaintyBadge(notice.certainty)}
+              {renderStatusBadge(notice.status, notice.staleReason)}
             </div>
           </div>
 
           <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.75rem', lineHeight: 1.6 }}>
             <div>
-              <strong>Permitted Methods:</strong> {version.notice.permittedMethods.join(', ')}
+              <strong>Permitted Methods:</strong> {(notice.permittedMethods || []).join(', ')}
             </div>
-            {version.notice.restrictedMethods && version.notice.restrictedMethods.length > 0 && (
+            {notice.restrictedMethods && notice.restrictedMethods.length > 0 && (
               <div style={{ color: '#f87171', fontSize: '0.78rem', marginTop: '0.25rem' }}>
-                ⚠️ Restriction: {version.notice.restrictedMethods.join(', ')}
+                ⚠️ Restriction: {notice.restrictedMethods.join(', ')}
               </div>
             )}
             <div style={{ marginTop: '0.4rem', fontSize: '0.78rem' }}>
-              <strong>Recipient:</strong> {version.notice.designatedRecipient}
+              <strong>Recipient:</strong> {notice.designatedRecipient}
             </div>
             <div style={{ marginTop: '0.2rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              <strong>Deemed Received:</strong> {version.notice.deemedReceivedDays} business days after mailing
+              <strong>Deemed Received:</strong> {notice.deemedReceivedDays} business days after mailing
             </div>
           </div>
 
           <div className="citation-box">
-            <div className="citation-header">{version.notice.citation}</div>
-            <div className="citation-quote">"{version.notice.exactQuote}"</div>
+            <div className="citation-header">{notice.citation}</div>
+            <div className="citation-quote">"{notice.exactQuote}"</div>
           </div>
 
-          {version.notice.clarificationQuestion && (
+          {notice.clarificationQuestion && (
             <div className="clarification-callout">
               <HelpCircle size={16} style={{ color: '#f59e0b', flexShrink: 0 }} />
               <div style={{ fontSize: '0.78rem' }}>
-                <strong>Ambiguity Flag:</strong> {version.notice.clarificationQuestion}
+                <strong>Ambiguity Flag:</strong> {notice.clarificationQuestion}
               </div>
             </div>
           )}
@@ -607,7 +650,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             {onOpenAiConsult && (
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => onOpenAiConsult('Notice Clause', version.notice.exactQuote)}
+                onClick={() => onOpenAiConsult('Notice Clause', notice.exactQuote)}
                 title="Consult Gemini AI Agent on notice requirements"
                 style={{ color: '#a5b4fc', borderColor: 'rgba(99, 102, 241, 0.4)' }}
               >
@@ -622,7 +665,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             </button>
             <button
               className="btn btn-secondary btn-sm"
-              onClick={() => onOpenEditModal(version.notice, 'NOTICE')}
+              onClick={() => onOpenEditModal(notice, 'NOTICE')}
             >
               <Edit3 size={12} /> Edit
             </button>
@@ -638,7 +681,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
             Key Contract Obligations, Deadlines & Responsible Parties
           </div>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            {version.obligations.length} total operational obligations extracted
+            {obligations.length} total operational obligations extracted
           </span>
         </div>
 
@@ -655,7 +698,7 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
               </tr>
             </thead>
             <tbody>
-              {version.obligations.map((item) => (
+              {obligations.map((item) => (
                 <tr key={item.id} style={{ background: item.status === 'STALE' ? 'rgba(236,72,153,0.06)' : undefined }}>
                   <td>
                     <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.88rem' }}>{item.title}</div>

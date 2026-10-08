@@ -615,11 +615,11 @@ export const App: React.FC = () => {
   };
 
   const staleItemsCount = currentVersion
-    ? currentVersion.obligations.filter((o) => o.status === 'STALE').length +
-      (currentVersion.renewal.status === 'STALE' ? 1 : 0)
+    ? (currentVersion.obligations || []).filter((o) => o.status === 'STALE').length +
+      (currentVersion.renewal?.status === 'STALE' ? 1 : 0)
     : 0;
   const openConflictsCount = currentVersion
-    ? currentVersion.conflicts.filter((c) => c.status === 'OPEN').length
+    ? (currentVersion.conflicts || []).filter((c) => c.status === 'OPEN').length
     : 0;
 
   return (

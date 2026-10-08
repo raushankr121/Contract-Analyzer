@@ -37,8 +37,8 @@ export const ConflictsClarifications: React.FC<ConflictsClarificationsProps> = (
     setResolutionNote('');
   };
 
-  const openItems = version.conflicts.filter((c) => c.status === 'OPEN');
-  const resolvedItems = version.conflicts.filter((c) => c.status === 'RESOLVED');
+  const openItems = (version?.conflicts || []).filter((c) => c.status === 'OPEN');
+  const resolvedItems = (version?.conflicts || []).filter((c) => c.status === 'RESOLVED');
 
   const renderSeverityBadge = (severity: string) => {
     switch (severity) {
