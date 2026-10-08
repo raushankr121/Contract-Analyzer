@@ -75,14 +75,6 @@ export const ExtractionWorkbench: React.FC<ExtractionWorkbenchProps> = ({
     status: 'PENDING' as ReviewStatus,
     certainty: 'CONFIRMED' as const,
   };
-  const governingLaw = version?.governingLaw || {
-    jurisdiction: 'N/A',
-    disputeForum: 'N/A',
-    citation: 'N/A',
-    exactQuote: '',
-    status: 'PENDING' as ReviewStatus,
-    certainty: 'CONFIRMED' as const,
-  };
   const notice = version?.notice || {
     permittedMethods: ['Email'],
     deemedReceivedDays: 1,

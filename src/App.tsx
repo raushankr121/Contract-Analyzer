@@ -19,8 +19,7 @@ import {
 } from './utils/contractExtractor';
 import { 
   SAMPLE_CONTRACT_V1_TEXT, 
-  SAMPLE_POLICY_TEXT, 
-  SAMPLE_CONTRACT_V2_TEXT
+  SAMPLE_POLICY_TEXT 
 } from './utils/sampleContracts';
 import { reconcileNewVersion } from './utils/versionManager';
 
