@@ -23,27 +23,27 @@ export const OperationalDatesModal: React.FC<OperationalDatesModalProps> = ({
   onClose,
   onSaveDates,
 }) => {
-  const currentEffective = version?.dates.effectiveDate.value.startsWith('Unstated')
+  const currentEffective = version?.dates?.effectiveDate?.value?.startsWith('Unstated')
     ? '2026-01-01'
-    : version?.dates.effectiveDate.value || '2026-01-01';
-  const currentExpiry = version?.dates.expiryDate.value.startsWith('Unstated')
+    : version?.dates?.effectiveDate?.value || '2026-01-01';
+  const currentExpiry = version?.dates?.expiryDate?.value?.startsWith('Unstated')
     ? '2026-12-31'
-    : version?.dates.expiryDate.value || '2026-12-31';
-  const currentTerm = version?.dates.initialTerm.value.startsWith('Unstated')
+    : version?.dates?.expiryDate?.value || '2026-12-31';
+  const currentTerm = version?.dates?.initialTerm?.value?.startsWith('Unstated')
     ? '12 months (Performance Period: Jan 1, 2026 to Dec 31, 2026)'
-    : version?.dates.initialTerm.value || '12 months';
+    : version?.dates?.initialTerm?.value || '12 months';
 
   const [effectiveDate, setEffectiveDate] = useState(currentEffective);
   const [expiryDate, setExpiryDate] = useState(currentExpiry);
   const [initialTerm, setInitialTerm] = useState(currentTerm);
   const [hasRenewalOption, setHasRenewalOption] = useState(
-    version?.renewal.type !== 'NO_RENEWAL'
+    version?.renewal?.type ? version.renewal.type !== 'NO_RENEWAL' : true
   );
   const [renewalNoticeDays, setRenewalNoticeDays] = useState(
-    version?.renewal.noticeWindowDays || 30
+    version?.renewal?.noticeWindowDays || 30
   );
   const [renewalPeriodMonths, setRenewalPeriodMonths] = useState(
-    version?.renewal.renewalPeriodMonths || 12
+    version?.renewal?.renewalPeriodMonths || 12
   );
   const [auditNote, setAuditNote] = useState(
     'Configured verified operational dates from executed countersigned copy.'
@@ -54,9 +54,9 @@ export const OperationalDatesModal: React.FC<OperationalDatesModalProps> = ({
       setEffectiveDate(currentEffective);
       setExpiryDate(currentExpiry);
       setInitialTerm(currentTerm);
-      setHasRenewalOption(version.renewal.type !== 'NO_RENEWAL');
-      setRenewalNoticeDays(version.renewal.noticeWindowDays || 30);
-      setRenewalPeriodMonths(version.renewal.renewalPeriodMonths || 12);
+      setHasRenewalOption(version.renewal?.type !== 'NO_RENEWAL');
+      setRenewalNoticeDays(version.renewal?.noticeWindowDays || 30);
+      setRenewalPeriodMonths(version.renewal?.renewalPeriodMonths || 12);
     }
   }, [version, isOpen, currentEffective, currentExpiry, currentTerm]);
 

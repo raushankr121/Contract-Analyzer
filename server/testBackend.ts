@@ -6,9 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { saveContracts, loadContracts, savePolicy, loadPolicy, appendLog, loadLogs, clearLogs } from './storage.js';
-import { analyzeContractWithGemini } from './geminiService.js';
-import { SAMPLE_CONTRACT_V1_TEXT } from '../src/utils/sampleContracts.js';
+import { saveContracts, loadContracts, savePolicy, loadPolicy, appendLog, loadLogs, clearLogs } from './storage';
+import { analyzeContractWithGemini } from './geminiService';
+import { SAMPLE_CONTRACT_V1_TEXT } from '../src/utils/sampleContracts';
 
 console.log('================================================================');
 console.log('RUNNING BACKEND & PERSISTENCE VERIFICATION SUITE');

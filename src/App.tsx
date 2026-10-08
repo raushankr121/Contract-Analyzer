@@ -807,12 +807,14 @@ export const App: React.FC = () => {
         onSave={handleSaveEditedItem}
       />
 
-      <OperationalDatesModal
-        isOpen={operationalDatesModalOpen}
-        version={currentVersion}
-        onClose={() => setOperationalDatesModalOpen(false)}
-        onSaveDates={handleSaveOperationalDates}
-      />
+      {currentVersion && (
+        <OperationalDatesModal
+          isOpen={operationalDatesModalOpen}
+          version={currentVersion}
+          onClose={() => setOperationalDatesModalOpen(false)}
+          onSaveDates={handleSaveOperationalDates}
+        />
+      )}
 
       <LogsDrawer
         isOpen={isLogsOpen}

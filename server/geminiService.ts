@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { appendLog } from './storage.js';
-import { extractContract } from '../src/utils/contractExtractor.js';
-import { calculateRenewalDeadline, generateDeterministicReminders } from '../src/utils/deterministicDate.js';
+import { appendLog } from './storage';
+import { extractContract } from '../src/utils/contractExtractor';
+import { calculateRenewalDeadline, generateDeterministicReminders } from '../src/utils/deterministicDate';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
